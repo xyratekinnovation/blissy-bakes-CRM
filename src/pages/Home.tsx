@@ -129,11 +129,25 @@ export default function Home() {
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-2xl gradient-button flex items-center justify-center shadow-button">
-                <Cake className="w-6 h-6 text-card" />
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-soft via-lavender-soft to-gold-soft flex items-center justify-center shadow-button overflow-hidden border-2 border-gold-sparkle/40 ring-2 ring-gold-sparkle/20">
+                <img 
+                  src="/icon-192x192.png" 
+                  alt="Blissyy Bakes Logo" 
+                  className="w-full h-full object-contain p-1.5"
+                  onError={(e) => {
+                    // Fallback to Cake icon if logo not found
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const fallback = target.nextElementSibling as HTMLElement;
+                    if (fallback) fallback.style.display = 'flex';
+                  }}
+                />
+                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-soft to-lavender-soft" style={{ display: 'none' }}>
+                  <Cake className="w-8 h-8 text-pink-deep" />
+                </div>
               </div>
               <div>
-                <h1 className="font-playfair text-xl font-bold text-gradient">Blissyy Bakes</h1>
+                <h1 className="font-playfair text-xl font-bold text-gradient">THE BLISSY BAKES</h1>
                 <p className="text-sm text-muted-foreground">Hi, {getUserDisplayName()} ☀️</p>
               </div>
             </div>
@@ -246,6 +260,13 @@ export default function Home() {
           )}
         </section>
       </main>
+
+      {/* Footer */}
+      <footer className="px-4 py-6 text-center">
+        <p className="text-sm text-muted-foreground">
+          Powered by XYRATEK INNOVATION
+        </p>
+      </footer>
 
       <BottomNav />
     </div>

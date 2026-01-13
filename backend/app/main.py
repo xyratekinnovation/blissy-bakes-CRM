@@ -7,11 +7,16 @@ import asyncio
 app = FastAPI(title="Blissy Bakes API", version="1.0.0")
 
 # CORS Setup
+# Get allowed origins from environment variable or use defaults
+import os
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else []
 origins = [
     "http://localhost:5173", # Vite default
     "http://localhost:3000",
+    "http://localhost:8080", # Vite dev server
     "http://localhost:8081", # Alternative frontend port
-    "*" # For development
+    *allowed_origins, # Add production origins from environment
+    "*" # For development (remove in production)
 ]
 
 app.add_middleware(

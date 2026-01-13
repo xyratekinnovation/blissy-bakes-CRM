@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { staffApi } from "@/api/staff";
+import { API_BASE_URL } from "@/lib/api-config";
 
 export default function Security() {
   const navigate = useNavigate();
@@ -88,7 +89,7 @@ export default function Security() {
       }
 
       // Verify current PIN by attempting login
-      const loginResponse = await fetch('http://localhost:8000/auth/login', {
+      const loginResponse = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

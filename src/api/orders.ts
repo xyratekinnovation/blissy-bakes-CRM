@@ -1,4 +1,4 @@
-
+import { API_BASE_URL } from '@/lib/api-config';
 
 export interface CreateOrderPayload {
     customer: {
@@ -24,7 +24,7 @@ export const ordersApi = {
      * This handles inventory updates and customer creation transactionally.
      */
     createOrder: async (payload: CreateOrderPayload) => {
-        const response = await fetch('http://localhost:8000/orders/create', {
+        const response = await fetch(`${API_BASE_URL}/orders/create`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ export const ordersApi = {
      * Uses direct DB read (RLS protected).
      */
     getOrders: async () => {
-        const response = await fetch('http://localhost:8000/orders');
+        const response = await fetch(`${API_BASE_URL}/orders`);
         if (!response.ok) throw new Error('Failed to fetch orders');
         return await response.json();
     }

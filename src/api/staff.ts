@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@/lib/api-config';
+
 export interface Staff {
     id: string;
     fullName: string;
@@ -12,7 +14,7 @@ export const staffApi = {
      * Fetches all staff members.
      */
     getStaff: async (): Promise<Staff[]> => {
-        const response = await fetch('http://localhost:8000/staff');
+        const response = await fetch(`${API_BASE_URL}/staff`);
         if (!response.ok) throw new Error('Failed to fetch staff');
         return await response.json();
     },
@@ -26,7 +28,7 @@ export const staffApi = {
         role?: string;
         pin?: string;
     }): Promise<Staff> => {
-        const response = await fetch('http://localhost:8000/staff', {
+        const response = await fetch(`${API_BASE_URL}/staff`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(staff)
@@ -48,7 +50,7 @@ export const staffApi = {
         isActive?: boolean;
         pin?: string;
     }): Promise<Staff> => {
-        const response = await fetch(`http://localhost:8000/staff/${staffId}`, {
+        const response = await fetch(`${API_BASE_URL}/staff/${staffId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(staff)
@@ -64,7 +66,7 @@ export const staffApi = {
      * Deletes a staff member.
      */
     deleteStaff: async (staffId: string): Promise<void> => {
-        const response = await fetch(`http://localhost:8000/staff/${staffId}`, {
+        const response = await fetch(`${API_BASE_URL}/staff/${staffId}`, {
             method: 'DELETE'
         });
         if (!response.ok) {

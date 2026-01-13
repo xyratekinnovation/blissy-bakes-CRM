@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@/lib/api-config';
+
 export interface Offer {
     id: string;
     title: string;
@@ -13,8 +15,8 @@ export const offersApi = {
     getOffers: async (filter?: "all" | "active" | "expired"): Promise<Offer[]> => {
         const isActive = filter === "active" ? true : filter === "expired" ? false : undefined;
         const url = isActive !== undefined
-            ? `http://localhost:8000/offers?is_active=${isActive}`
-            : 'http://localhost:8000/offers';
+            ? `${API_BASE_URL}/offers?is_active=${isActive}`
+            : `${API_BASE_URL}/offers`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch offers');
         return await response.json();
@@ -29,7 +31,7 @@ export const offersApi = {
         endDate?: string;
         isActive: boolean;
     }): Promise<Offer> => {
-        const response = await fetch('http://localhost:8000/offers', {
+        const response = await fetch(`${API_BASE_URL}/offers`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(offer)
@@ -42,7 +44,7 @@ export const offersApi = {
     },
     
     getStats: async () => {
-        const response = await fetch('http://localhost:8000/offers/stats');
+        const response = await fetch(`${API_BASE_URL}/offers/stats`);
         if (!response.ok) throw new Error('Failed to fetch stats');
         return await response.json();
     }

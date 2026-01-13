@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@/lib/api-config';
+
 export interface Expense {
     id: string;
     title: string;
@@ -10,8 +12,8 @@ export interface Expense {
 export const expensesApi = {
     getExpenses: async (category?: string): Promise<Expense[]> => {
         const url = category && category !== "All"
-            ? `http://localhost:8000/expenses?category=${encodeURIComponent(category)}`
-            : 'http://localhost:8000/expenses';
+            ? `${API_BASE_URL}/expenses?category=${encodeURIComponent(category)}`
+            : `${API_BASE_URL}/expenses`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch expenses');
         return await response.json();
@@ -27,7 +29,7 @@ export const expensesApi = {
         const userStr = localStorage.getItem('user');
         const user = userStr ? JSON.parse(userStr) : null;
         
-        const response = await fetch('http://localhost:8000/expenses', {
+        const response = await fetch(`${API_BASE_URL}/expenses`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -43,13 +45,13 @@ export const expensesApi = {
     },
     
     getStats: async () => {
-        const response = await fetch('http://localhost:8000/expenses/stats');
+        const response = await fetch(`${API_BASE_URL}/expenses/stats`);
         if (!response.ok) throw new Error('Failed to fetch stats');
         return await response.json();
     },
 
     deleteExpense: async (expenseId: string): Promise<void> => {
-        const response = await fetch(`http://localhost:8000/expenses/${expenseId}`, {
+        const response = await fetch(`${API_BASE_URL}/expenses/${expenseId}`, {
             method: 'DELETE'
         });
         if (!response.ok) {

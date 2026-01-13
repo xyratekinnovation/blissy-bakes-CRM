@@ -1,11 +1,11 @@
-
+import { API_BASE_URL } from '@/lib/api-config';
 
 export const reportsApi = {
     /**
      * Fetches dashboard statistics via Python backend.
      */
     getDashboardStats: async (period: 'today' | 'week' | 'month' = 'today') => {
-        const response = await fetch(`http://localhost:8000/analytics/dashboard-stats?period=${period}`);
+        const response = await fetch(`${API_BASE_URL}/analytics/dashboard-stats?period=${period}`);
 
         if (!response.ok) throw new Error('Failed to fetch stats');
         return await response.json();
@@ -18,7 +18,7 @@ export const reportsApi = {
     exportDailyReport: async (date: Date) => {
         const dateStr = date.toISOString().split('T')[0];
 
-        const response = await fetch('http://localhost:8000/analytics/export-daily', {
+        const response = await fetch(`${API_BASE_URL}/analytics/export-daily`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ date: dateStr })

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api-config';
 
 export interface Product {
     id: string;
@@ -15,8 +16,8 @@ export const productsApi = {
      */
     getProducts: async (category?: string): Promise<Product[]> => {
         const url = category && category !== "All" 
-            ? `http://localhost:8000/products?category=${encodeURIComponent(category)}`
-            : 'http://localhost:8000/products';
+            ? `${API_BASE_URL}/products?category=${encodeURIComponent(category)}`
+            : `${API_BASE_URL}/products`;
         
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch products');
@@ -27,7 +28,7 @@ export const productsApi = {
      * Fetches a single product by ID.
      */
     getProduct: async (productId: string): Promise<Product> => {
-        const response = await fetch(`http://localhost:8000/products/${productId}`);
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`);
         if (!response.ok) throw new Error('Failed to fetch product');
         return await response.json();
     },
@@ -60,7 +61,7 @@ export const productsApi = {
             formData.append('imageUrl', product.imageUrl);
         }
         
-        const response = await fetch('http://localhost:8000/products', {
+        const response = await fetch(`${API_BASE_URL}/products`, {
             method: 'POST',
             body: formData
         });
@@ -97,7 +98,7 @@ export const productsApi = {
             formData.append('imageUrl', product.imageUrl || '');
         }
         
-        const response = await fetch(`http://localhost:8000/products/${productId}`, {
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
             method: 'PUT',
             body: formData
         });
@@ -112,7 +113,7 @@ export const productsApi = {
      * Deletes a product.
      */
     deleteProduct: async (productId: string): Promise<void> => {
-        const response = await fetch(`http://localhost:8000/products/${productId}`, {
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
             method: 'DELETE'
         });
         if (!response.ok) {

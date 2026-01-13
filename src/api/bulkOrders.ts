@@ -1,3 +1,5 @@
+import { API_BASE_URL } from '@/lib/api-config';
+
 export interface BulkOrder {
     id: string;
     customer: string;
@@ -12,8 +14,8 @@ export interface BulkOrder {
 export const bulkOrdersApi = {
     getBulkOrders: async (status?: string): Promise<BulkOrder[]> => {
         const url = status
-            ? `http://localhost:8000/bulk-orders?status=${encodeURIComponent(status)}`
-            : 'http://localhost:8000/bulk-orders';
+            ? `${API_BASE_URL}/bulk-orders?status=${encodeURIComponent(status)}`
+            : `${API_BASE_URL}/bulk-orders`;
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch bulk orders');
         return await response.json();
@@ -28,7 +30,7 @@ export const bulkOrdersApi = {
         advance: number;
         customerId?: string;
     }): Promise<BulkOrder> => {
-        const response = await fetch('http://localhost:8000/bulk-orders', {
+        const response = await fetch(`${API_BASE_URL}/bulk-orders`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(order)
@@ -41,7 +43,7 @@ export const bulkOrdersApi = {
     },
     
     updateStatus: async (orderId: string, status: string) => {
-        const response = await fetch(`http://localhost:8000/bulk-orders/${orderId}/status?status=${status}`, {
+        const response = await fetch(`${API_BASE_URL}/bulk-orders/${orderId}/status?status=${status}`, {
             method: 'PUT'
         });
         if (!response.ok) {
@@ -58,7 +60,7 @@ export const bulkOrdersApi = {
         items?: string;
         deliveryDate?: string;
     }): Promise<BulkOrder> => {
-        const response = await fetch(`http://localhost:8000/bulk-orders/${orderId}`, {
+        const response = await fetch(`${API_BASE_URL}/bulk-orders/${orderId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(order)
@@ -71,7 +73,7 @@ export const bulkOrdersApi = {
     },
 
     deleteBulkOrder: async (orderId: string): Promise<void> => {
-        const response = await fetch(`http://localhost:8000/bulk-orders/${orderId}`, {
+        const response = await fetch(`${API_BASE_URL}/bulk-orders/${orderId}`, {
             method: 'DELETE'
         });
         if (!response.ok) {

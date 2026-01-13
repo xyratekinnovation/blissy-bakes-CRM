@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Sparkles } from "@/components/Sparkles";
 import { Cake, Phone, Lock, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_BASE_URL } from "@/lib/api-config";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ export default function Login() {
   const handlePinLogin = async () => {
     if (pin.length >= 4 && phone.length >= 10) {
       try {
-        const response = await fetch('http://localhost:8000/auth/login', {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phoneNumber: phone, pin: pin })
@@ -45,7 +46,7 @@ export default function Login() {
         }
       } catch (e) {
         console.error("Login error:", e);
-        alert("Connection error! Please make sure the backend server is running on http://localhost:8000");
+        alert(`Connection error! Please make sure the backend server is running on ${API_BASE_URL}`);
       }
     }
   };
@@ -62,8 +63,22 @@ export default function Login() {
         {/* Logo Section */}
         <div className="animate-bounce-soft mb-8">
           <div className="relative">
-            <div className="w-28 h-28 rounded-3xl gradient-button shadow-glow flex items-center justify-center">
-              <Cake className="w-14 h-14 text-card" />
+            <div className="w-28 h-28 rounded-3xl bg-gradient-to-br from-pink-soft via-lavender-soft to-gold-soft shadow-glow flex items-center justify-center overflow-hidden border-2 border-gold-sparkle/40 ring-2 ring-gold-sparkle/20">
+              <img 
+                src="/icon-192x192.png" 
+                alt="Blissyy Bakes Logo" 
+                className="w-full h-full object-contain p-2"
+                onError={(e) => {
+                  // Fallback to Cake icon if logo not found
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.nextElementSibling as HTMLElement;
+                  if (fallback) fallback.style.display = 'flex';
+                }}
+              />
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-soft to-lavender-soft" style={{ display: 'none' }}>
+                <Cake className="w-14 h-14 text-pink-deep" />
+              </div>
             </div>
             <div className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-gold-sparkle animate-sparkle" />
           </div>
@@ -71,7 +86,7 @@ export default function Login() {
 
         {/* Brand */}
         <h1 className="font-playfair text-4xl font-bold text-gradient mb-2">
-          Blissyy Bakes
+          THE BLISSY BAKES
         </h1>
         <p className="text-muted-foreground text-lg mb-10 font-medium">
           Sweet Sales. Made Simple.
@@ -204,7 +219,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="mt-8 text-sm text-muted-foreground">
-          Powered by ✨ Sweet Tech
+          Powered by XYRATEK INNOVATION
         </p>
       </div>
     </div >

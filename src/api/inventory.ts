@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '@/lib/api-config';
 
 export interface InventoryItem {
     id: string;
@@ -16,8 +17,8 @@ export const inventoryApi = {
      */
     getInventory: async (category?: string): Promise<InventoryItem[]> => {
         const url = category && category !== "All"
-            ? `http://localhost:8000/inventory?category=${encodeURIComponent(category)}`
-            : 'http://localhost:8000/inventory';
+            ? `${API_BASE_URL}/inventory?category=${encodeURIComponent(category)}`
+            : `${API_BASE_URL}/inventory`;
         
         const response = await fetch(url);
         if (!response.ok) throw new Error('Failed to fetch inventory');
@@ -28,7 +29,7 @@ export const inventoryApi = {
      * Fetches low stock items.
      */
     getLowStockItems: async (): Promise<InventoryItem[]> => {
-        const response = await fetch('http://localhost:8000/inventory/low-stock');
+        const response = await fetch(`${API_BASE_URL}/inventory/low-stock`);
         if (!response.ok) throw new Error('Failed to fetch low stock items');
         return await response.json();
     },
@@ -37,7 +38,7 @@ export const inventoryApi = {
      * Restocks an inventory item.
      */
     restockItem: async (inventoryId: string, newStock: number): Promise<InventoryItem> => {
-        const response = await fetch(`http://localhost:8000/inventory/${inventoryId}/restock`, {
+        const response = await fetch(`${API_BASE_URL}/inventory/${inventoryId}/restock`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ newStock })
@@ -56,7 +57,7 @@ export const inventoryApi = {
      * Gets inventory statistics.
      */
     getStats: async () => {
-        const response = await fetch('http://localhost:8000/inventory/stats');
+        const response = await fetch(`${API_BASE_URL}/inventory/stats`);
         if (!response.ok) throw new Error('Failed to fetch inventory stats');
         return await response.json();
     },
@@ -69,7 +70,7 @@ export const inventoryApi = {
         stock: number;
         minStock?: number;
     }): Promise<InventoryItem> => {
-        const response = await fetch('http://localhost:8000/inventory', {
+        const response = await fetch(`${API_BASE_URL}/inventory`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(item)
@@ -85,7 +86,7 @@ export const inventoryApi = {
      * Deletes an inventory item.
      */
     deleteInventoryItem: async (inventoryId: string): Promise<void> => {
-        const response = await fetch(`http://localhost:8000/inventory/${inventoryId}`, {
+        const response = await fetch(`${API_BASE_URL}/inventory/${inventoryId}`, {
             method: 'DELETE'
         });
         if (!response.ok) {
