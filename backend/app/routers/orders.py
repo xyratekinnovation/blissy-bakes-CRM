@@ -1,0 +1,178 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, func
+from sqlalchemy.orm import joinedload, selectinload
+from ..database import get_db
+from ..models import Order, OrderItem, Customer, Product, Inventory, AppUser
+from ..schemas import CreateOrderRequest, OrderResponse, OrderView
+from decimal import Decimal
+import uuid
+from typing import List
+
+router = APIRouter(prefix="/orders", tags=["orders"])
+
+@router.get("", response_model=List[OrderView])
+async def get_orders(db: AsyncSession = Depends(get_db)):
+    stmt = (
+        select(Order)
+        .options(
+            joinedload(Order.customer), 
+            joinedload(Order.staff),
+            selectinload(Order.items).joinedload(OrderItem.product)
+        )
+        .order_by(Order.created_at.desc())
+        .limit(50)
+    )
+    result = await db.execute(stmt)
+    orders = result.scalars().all()
+    
+    from ..schemas import OrderItemView
+    
+    order_list = []
+    for o in orders:
+        items_list = []
+        for i in o.items:
+            items_list.append(OrderItemView(
+                id=str(i.id),
+                productId=str(i.product_id) if i.product_id else "",
+                name=i.product.name if i.product else "Unknown",
+                quantity=i.quantity,
+                price=float(i.unit_price),
+                image=i.product.image_url if i.product and i.product.image_url else "🎂"
+            ))
+        
+        order_list.append(OrderView(
+            id=o.id,
+            order_number=o.order_number or f"#{str(o.id)[:8].upper()}",  # Fallback to short UUID if no order_number
+            created_at=o.created_at,
+            total_amount=o.total_amount,
+            payment_method=o.payment_method,
+            status=o.status,
+            customer_name=o.customer.full_name if o.customer else "Unknown",
+            customer_phone=o.customer.phone_number if o.customer else "",
+            staff_name=o.staff.full_name if o.staff else "System",
+            items_summary=", ".join([f"{i.quantity}x {i.product.name if i.product else 'Unknown'}" for i in o.items]),
+            items=items_list
+        ))
+    
+    return order_list
+
+@router.post("/create", response_model=OrderResponse)
+async def create_order(order_data: CreateOrderRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        # ALL database operations in a single transaction
+        # 1. Handle Customer
+        customer_id = None
+        existing_customer = None
+        new_customer = None
+        
+        # Check if customer exists by phone
+        result = await db.execute(select(Customer).where(Customer.phone_number == order_data.customer.phoneNumber))
+        existing_customer = result.scalars().first()
+        
+        if existing_customer:
+            customer_id = existing_customer.id
+            # Update customer name if provided (in case it changed)
+            if order_data.customer.fullName and order_data.customer.fullName != existing_customer.full_name:
+                existing_customer.full_name = order_data.customer.fullName
+        else:
+            new_customer = Customer(
+                full_name=order_data.customer.fullName,
+                phone_number=order_data.customer.phoneNumber,
+                notes=order_data.customer.notes
+            )
+            db.add(new_customer)
+            await db.flush() # get ID
+            customer_id = new_customer.id
+
+        # 2. Generate sequential order number
+        # Find all existing order numbers and get the highest
+        all_orders_result = await db.execute(
+            select(Order.order_number)
+            .where(Order.order_number.isnot(None))
+        )
+        all_order_numbers = [row[0] for row in all_orders_result.all() if row[0]]
+        
+        # Extract numbers and find the maximum
+        max_number = 0
+        for order_num in all_order_numbers:
+            # Extract number from format like "BB001" or "#BB001"
+            number_str = str(order_num).replace("#", "").replace("BB", "").strip()
+            try:
+                num = int(number_str)
+                if num > max_number:
+                    max_number = num
+            except ValueError:
+                continue
+        
+        # Generate next order number
+        next_number = max_number + 1
+        order_number = f"BB{str(next_number).zfill(3)}"
+        
+        # 3. Create Order
+        new_order = Order(
+            order_number=order_number,
+            customer_id=customer_id,
+            staff_id=order_data.staffId,
+            total_amount=Decimal(str(order_data.totalAmount)),
+            payment_method=order_data.paymentMethod,
+            status="completed",
+            notes=order_data.notes
+        )
+        db.add(new_order)
+        await db.flush() # get ID
+
+        # Update Customer Stats
+        if existing_customer:
+             # existing_customer is already attached to the session
+             existing_customer.total_orders += 1
+             existing_customer.total_spent = existing_customer.total_spent + Decimal(str(order_data.totalAmount))
+             # updated_at will be automatically updated by SQLAlchemy due to onupdate=func.now()
+             # No need to manually set it
+        else:
+             # new_customer was just added
+             new_customer.total_orders = 1
+             new_customer.total_spent = Decimal(str(order_data.totalAmount))
+
+        # 3. Create Items and Update Inventory
+        for item in order_data.items:
+            # Add Order Item
+            order_item = OrderItem(
+                order_id=new_order.id,
+                product_id=item.id,
+                quantity=item.quantity,
+                unit_price=Decimal(str(item.price)), # Should ideally verify against DB price
+                total_price=Decimal(str(item.price * item.quantity))
+            )
+            db.add(order_item)
+
+            # Update Inventory
+            # Fetch current stock to ensure valid
+            inv_result = await db.execute(select(Inventory).where(Inventory.product_id == item.id).with_for_update())
+            inventory = inv_result.scalars().first()
+            
+            if inventory:
+                if inventory.stock_quantity < item.quantity:
+                     await db.rollback()
+                     raise HTTPException(status_code=400, detail=f"Insufficient stock for product id {item.id}")
+                
+                inventory.stock_quantity -= item.quantity
+                db.add(inventory) # Mark for update
+            else:
+                 await db.rollback()
+                 raise HTTPException(status_code=400, detail=f"Inventory record not found for product id {item.id}")
+        
+        # Commit all changes
+        await db.commit()
+        
+        # Return success with order ID and order number
+        return {"success": True, "orderId": new_order.id, "orderNumber": new_order.order_number}
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception as e:
+        # Log the error and return a user-friendly message
+        import traceback
+        print(f"Error creating order: {str(e)}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Failed to create order: {str(e)}")
