@@ -17,6 +17,9 @@ export default function Inventory() {
   const [loading, setLoading] = useState(true);
   const [restockingId, setRestockingId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showRestockModal, setShowRestockModal] = useState(false);
+  const [restockItem, setRestockItem] = useState<InventoryItem | null>(null);
+  const [restockQuantity, setRestockQuantity] = useState("10");
   const [products, setProducts] = useState<any[]>([]);
   const [formProductId, setFormProductId] = useState("");
   const [formStock, setFormStock] = useState("");
@@ -59,15 +62,34 @@ export default function Inventory() {
     }
   };
 
-  const handleRestock = async (item: InventoryItem) => {
+  const handleRestockClick = (item: InventoryItem) => {
+    setRestockItem(item);
+    setRestockQuantity("10");
+    setShowRestockModal(true);
+  };
+
+  const handleRestock = async () => {
+    if (!restockItem || !restockQuantity || parseInt(restockQuantity) <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid quantity to add",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      setRestockingId(item.id);
-      const newStock = item.stock + 10; // Add 10 units, can be made configurable
-      await inventoryApi.restockItem(item.id, newStock);
+      setRestockingId(restockItem.id);
+      const quantityToAdd = parseInt(restockQuantity);
+      const newStock = restockItem.stock + quantityToAdd;
+      await inventoryApi.restockItem(restockItem.id, newStock);
       toast({
         title: "Success",
-        description: `${item.name} restocked to ${newStock} ${item.unit}`
+        description: `${restockItem.name} restocked by ${quantityToAdd} ${restockItem.unit} (new total: ${newStock})`
       });
+      setShowRestockModal(false);
+      setRestockItem(null);
+      setRestockQuantity("10");
       await loadInventory();
     } catch (error) {
       console.error("Failed to restock:", error);
@@ -301,7 +323,7 @@ export default function Inventory() {
                         variant="ghost" 
                         size="sm" 
                         className="text-primary h-8"
-                        onClick={() => handleRestock(item)}
+                        onClick={() => handleRestockClick(item)}
                         disabled={restockingId === item.id}
                       >
                         {restockingId === item.id ? (
@@ -360,13 +382,11 @@ export default function Inventory() {
                   onChange={(e) => setFormProductId(e.target.value)}
                 >
                   <option value="">Select a product</option>
-                  {products
-                    .filter(p => !inventoryItems.some(i => i.productId === p.id))
-                    .map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.name} ({product.category})
-                      </option>
-                    ))}
+                  {products.map((product) => (
+                    <option key={product.id} value={product.id}>
+                      {product.name} ({product.category})
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -407,6 +427,69 @@ export default function Inventory() {
                   </>
                 ) : (
                   "Add Inventory Item"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restock Modal */}
+      {showRestockModal && restockItem && (
+        <div
+          className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-end"
+          onClick={() => {
+            setShowRestockModal(false);
+            setRestockItem(null);
+            setRestockQuantity("10");
+          }}
+        >
+          <div
+            className="w-full bg-card rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
+            <h2 className="font-playfair text-xl font-bold mb-6">Restock {restockItem.name}</h2>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-2xl">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-muted-foreground">Current Stock</span>
+                  <span className="text-lg font-bold text-foreground">{restockItem.stock} {restockItem.unit}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Minimum Stock</span>
+                  <span className="text-sm text-foreground">{restockItem.minStock} {restockItem.unit}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">Quantity to Add *</label>
+                <Input 
+                  type="number" 
+                  placeholder="10" 
+                  className="h-12 rounded-2xl"
+                  value={restockQuantity}
+                  onChange={(e) => setRestockQuantity(e.target.value)}
+                  min="1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">New total will be: {restockItem.stock + (parseInt(restockQuantity) || 0)} {restockItem.unit}</p>
+              </div>
+
+              <Button 
+                variant="bakery" 
+                size="lg" 
+                className="w-full mt-4"
+                onClick={handleRestock}
+                disabled={isSubmitting || restockingId === restockItem.id}
+              >
+                {isSubmitting || restockingId === restockItem.id ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Restocking...
+                  </>
+                ) : (
+                  "Restock Item"
                 )}
               </Button>
             </div>
