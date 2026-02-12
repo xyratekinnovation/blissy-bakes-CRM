@@ -18,9 +18,7 @@ export default function BillPreview() {
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'upi' | 'other'>('cash');
   const [isCreating, setIsCreating] = useState(false);
 
-  const subtotal = cart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
-  const tax = Math.round(subtotal * 0.05); // 5% tax
-  const total = subtotal + tax;
+  const total = cart.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
 
   const handleGenerateBill = async () => {
     if (!customer.name || !customer.phone) {
@@ -79,8 +77,6 @@ export default function BillPreview() {
         state: { 
           cart, 
           customer, 
-          subtotal, 
-          tax, 
           total, 
           notes,
           orderId: result.orderId,
@@ -101,19 +97,15 @@ export default function BillPreview() {
 
   const handleShareWhatsApp = () => {
     const itemsList = cart
-      .map((item: any) => `• ${item.name} x${item.quantity} - ₹${item.price * item.quantity}`)
+      .map((item: any) => `• ${item.name} - Qty: ${item.quantity} - ₹${item.price} each - ₹${item.price * item.quantity}`)
       .join("\n");
-    
     const message = encodeURIComponent(
       `🧁 *Blissyy Bakes*\n\n` +
       `Hi ${customer.name}!\n\n` +
       `*Your Order:*\n${itemsList}\n\n` +
-      `Subtotal: ₹${subtotal}\n` +
-      `Tax (5%): ₹${tax}\n` +
-      `*Total: ₹{total}*\n\n` +
+      `*Total: ₹${total}*\n\n` +
       `Thank you for choosing Blissyy Bakes! 💖`
     );
-    
     window.open(`https://wa.me/${customer.phone}?text=${message}`, "_blank");
   };
 
@@ -269,20 +261,10 @@ export default function BillPreview() {
               )}
             </div>
 
-            {/* Totals */}
-            <div className="space-y-2 pt-4 border-t border-border">
-              <div className="flex justify-between text-muted-foreground">
-                <span>Subtotal</span>
-                <span>₹{subtotal}</span>
-              </div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>Tax (5%)</span>
-                <span>₹{tax}</span>
-              </div>
-              <div className="flex justify-between text-xl font-bold pt-2 border-t border-border">
-                <span className="text-foreground">Total</span>
-                <span className="text-gradient">₹{total}</span>
-              </div>
+            {/* Total */}
+            <div className="flex justify-between text-xl font-bold pt-4 border-t border-border">
+              <span className="text-foreground">Total</span>
+              <span className="text-gradient">₹{total}</span>
             </div>
           </div>
         </div>

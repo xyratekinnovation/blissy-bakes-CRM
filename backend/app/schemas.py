@@ -82,6 +82,14 @@ class OrderResponse(BaseModel):
     orderId: UUID
     orderNumber: Optional[str] = None  # Sequential order number like BB001
 
+class UpdateOrderRequest(BaseModel):
+    customer: CustomerBase
+    items: List[OrderItemRequest]
+    paymentMethod: str
+    staffId: Optional[UUID] = None
+    notes: Optional[str] = None
+    totalAmount: float
+
 class OrderItemView(BaseModel):
     id: str
     productId: str

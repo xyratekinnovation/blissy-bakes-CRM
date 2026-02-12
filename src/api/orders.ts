@@ -42,11 +42,47 @@ export const ordersApi = {
 
     /**
      * Fetches recent orders.
-     * Uses direct DB read (RLS protected).
      */
     getOrders: async () => {
         const response = await fetch(`${API_BASE_URL}/orders`);
         if (!response.ok) throw new Error('Failed to fetch orders');
+        return await response.json();
+    },
+
+    /**
+     * Fetches a single order by ID.
+     */
+    getOrder: async (orderId: string) => {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}`);
+        if (!response.ok) throw new Error('Failed to fetch order');
+        return await response.json();
+    },
+
+    /**
+     * Updates an existing order (items, customer, total, etc.).
+     */
+    updateOrder: async (orderId: string, payload: CreateOrderPayload) => {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to update order');
+        }
+        return await response.json();
+    },
+
+    /**
+     * Deletes an order and restores inventory.
+     */
+    deleteOrder: async (orderId: string) => {
+        const response = await fetch(`${API_BASE_URL}/orders/${orderId}`, { method: 'DELETE' });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to delete order');
+        }
         return await response.json();
     }
 };

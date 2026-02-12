@@ -21,6 +21,7 @@ import Menu from "./pages/Menu";
 import StaffManagement from "./pages/StaffManagement";
 import AccountSettings from "./pages/AccountSettings";
 import Security from "./pages/Security";
+import EditOrder from "./pages/EditOrder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
           <Route path="/bill-preview" element={<BillPreview />} />
           <Route path="/bill-success" element={<BillSuccess />} />
           <Route path="/orders" element={<Orders />} />
+          <Route path="/edit-order" element={<EditOrder />} />
           <Route path="/customers" element={<Customers />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />

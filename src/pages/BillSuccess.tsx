@@ -15,7 +15,7 @@ interface Confetti {
 export default function BillSuccess() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { total = 0, customer = {}, orderNumber } = location.state || {};
+  const { total = 0, customer = {}, orderNumber, cart = [] } = location.state || {};
   const [confetti, setConfetti] = useState<Confetti[]>([]);
 
   useEffect(() => {
@@ -31,10 +31,17 @@ export default function BillSuccess() {
   }, []);
 
   const handleShareWhatsApp = () => {
+    const itemsList = cart.length > 0
+      ? cart
+          .map((item: any) => `• ${item.name} - Qty: ${item.quantity} - ₹${item.price} each - ₹${item.price * item.quantity}`)
+          .join("\n")
+      : `Total: ₹${total}`;
     const message = encodeURIComponent(
       `🧁 *Blissyy Bakes*\n\n` +
-      `Thank you ${customer.name}! Your order of ₹${total} has been confirmed.\n\n` +
-      `We appreciate your business! 💖`
+      `Hi ${customer.name}!\n\n` +
+      `*Your Order:*\n${itemsList}\n\n` +
+      `*Total: ₹${total}*\n\n` +
+      `Thank you for choosing Blissyy Bakes! 💖`
     );
     window.open(`https://wa.me/${customer.phone}?text=${message}`, "_blank");
   };

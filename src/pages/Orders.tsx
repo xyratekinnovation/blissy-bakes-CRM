@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Search, Filter, Calendar, Star, Phone, Loader2 } from "lucide-react";
+import { Search, Filter, Calendar, Star, Phone, Loader2, Pencil, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { BottomNav } from "@/components/BottomNav";
 import { cn } from "@/lib/utils";
 
 interface Order {
   id: string;
+  orderId: string; // UUID for API calls (edit/delete)
   customer: string;
   phone: string;
   items: string;
@@ -26,15 +28,31 @@ interface Order {
 import { ordersApi } from "@/api/orders";
 import { useEffect } from "react";
 import { isToday, isYesterday, format } from "date-fns";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const dateFilters = ["All", "Today", "Yesterday", "This Week", "This Month"];
 
 export default function Orders() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -59,15 +77,16 @@ export default function Orders() {
         if (isYesterday(dateObj)) dateLabel = "Yesterday";
 
         return {
-          id: o.order_number ? `#${o.order_number}` : `#${o.id.slice(0, 8).toUpperCase()}`, // Use order_number if available
+          id: o.order_number ? `#${o.order_number}` : `#${o.id.slice(0, 8).toUpperCase()}`,
+          orderId: o.id,
           customer: o.customer_name || "Unknown",
           phone: o.customer_phone || "",
           items: o.items_summary || "Items",
-          itemsDetail: o.items || [], // Full items with images
+          itemsDetail: o.items || [],
           total: o.total_amount,
           date: dateLabel,
           time: format(dateObj, "h:mm a"),
-          visits: 1 // Placeholder
+          visits: 1
         };
       });
       setOrders(mapped);
@@ -76,6 +95,35 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDeleteClick = (order: Order, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setOrderToDelete(order);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!orderToDelete) return;
+    try {
+      setDeleting(true);
+      await ordersApi.deleteOrder(orderToDelete.orderId);
+      toast({ title: "Order deleted", description: "Order has been removed." });
+      setSelectedOrder(null);
+      setOrderToDelete(null);
+      setDeleteDialogOpen(false);
+      loadOrders();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message || "Failed to delete order", variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleEditClick = (order: Order, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedOrder(null);
+    navigate("/edit-order", { state: { orderId: order.orderId } });
   };
 
   const filteredOrders = orders.filter((order) => {
@@ -145,7 +193,7 @@ export default function Orders() {
         ) : (
           filteredOrders.map((order) => (
           <div
-            key={order.id}
+            key={order.orderId}
             onClick={() => setSelectedOrder(order)}
             className="bakery-card cursor-pointer"
           >
@@ -273,18 +321,47 @@ export default function Orders() {
                 )}
               </div>
 
-              <div className="flex gap-2">
-                <button className="flex-1 p-3 bg-pink-soft text-pink-deep rounded-xl font-semibold">
-                  Reorder
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={(e) => handleEditClick(selectedOrder, e)}
+                  className="flex-1 min-w-[120px] p-3 bg-pink-soft text-pink-deep rounded-xl font-semibold flex items-center justify-center gap-2"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit
                 </button>
-                <button className="flex-1 p-3 bg-lavender-soft text-lavender-deep rounded-xl font-semibold">
-                  View Receipt
+                <button
+                  onClick={(e) => handleDeleteClick(selectedOrder, e)}
+                  className="flex-1 min-w-[120px] p-3 bg-red-100 text-red-700 rounded-xl font-semibold flex items-center justify-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the order and restore inventory. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BottomNav />
     </div>
