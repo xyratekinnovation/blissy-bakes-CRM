@@ -277,10 +277,10 @@ export default function Orders() {
         )}
       </main>
 
-      {/* Order Detail Modal - scrollable content, background locked */}
+      {/* Order Detail Modal - above bottom nav (z-[60]), scrollable content */}
       {selectedOrder && (
         <div
-          className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex flex-col items-end overflow-hidden"
+          className="fixed inset-0 z-[60] bg-foreground/20 backdrop-blur-sm flex flex-col items-end overflow-hidden"
           onClick={() => setSelectedOrder(null)}
         >
           <button
@@ -290,7 +290,7 @@ export default function Orders() {
             aria-label="Close"
           />
           <div
-            className="w-full bg-card rounded-t-3xl flex flex-col max-h-[80vh] animate-slide-up shrink-0"
+            className="w-full bg-card rounded-t-3xl flex flex-col max-h-[85vh] animate-slide-up shrink-0 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="shrink-0 p-4 pt-3 pb-0">
@@ -305,8 +305,8 @@ export default function Orders() {
                 <span className="text-2xl font-bold text-gradient">₹{selectedOrder.total}</span>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto overscroll-contain px-6 pb-8">
-              <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto overscroll-contain px-6 pb-8 min-h-0 -webkit-overflow-scrolling-touch">
+              <div className="space-y-4 pb-6">
                 <div className="p-4 bg-muted rounded-2xl">
                   <p className="text-sm text-muted-foreground mb-1">Customer</p>
                   <p className="font-semibold">{selectedOrder.customer}</p>
@@ -345,7 +345,7 @@ export default function Orders() {
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-border pb-2">
+                <div className="pt-2 border-t border-border pb-8">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Order actions</p>
                   <div className="flex gap-2">
                     <button
