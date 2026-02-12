@@ -7,24 +7,26 @@ import asyncio
 app = FastAPI(title="Blissy Bakes API", version="1.0.0")
 
 # CORS Setup
-# Get allowed origins from environment variable or use defaults
+# With allow_credentials=True, browser requires explicit origins (no "*")
 import os
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "").split(",") if os.getenv("ALLOWED_ORIGINS") else []
+allowed_origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()]
 origins = [
-    "http://localhost:5173", # Vite default
+    "http://localhost:5173",
     "http://localhost:3000",
-    "http://localhost:8080", # Vite dev server
-    "http://localhost:8081", # Alternative frontend port
-    *allowed_origins, # Add production origins from environment
-    "*" # For development (remove in production)
+    "http://localhost:8080",
+    "http://localhost:8081",
+    "https://blissy-bakes-crm.vercel.app",  # Production frontend
+    "https://blissy-bakes-crm.vercel.app/",
+    *allowed_origins,
 ]
-
+# Fallback: if no origins (e.g. dev), allow localhost only is already in list
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include Routers
