@@ -76,9 +76,10 @@ export default function Orders() {
         if (isToday(dateObj)) dateLabel = "Today";
         if (isYesterday(dateObj)) dateLabel = "Yesterday";
 
+        const rawId = o.id != null ? (typeof o.id === "string" ? o.id : String(o.id)) : "";
         return {
-          id: o.order_number ? `#${o.order_number}` : `#${o.id.slice(0, 8).toUpperCase()}`,
-          orderId: o.id,
+          id: o.order_number ? `#${o.order_number}` : (rawId ? `#${rawId.slice(0, 8).toUpperCase()}` : "—"),
+          orderId: rawId,
           customer: o.customer_name || "Unknown",
           phone: o.customer_phone || "",
           items: o.items_summary || "Items",
@@ -99,6 +100,10 @@ export default function Orders() {
 
   const handleDeleteClick = (order: Order, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!order.orderId) {
+      toast({ title: "Cannot delete", description: "Order ID is missing. Please refresh the list.", variant: "destructive" });
+      return;
+    }
     setOrderToDelete(order);
     setDeleteDialogOpen(true);
   };
@@ -122,6 +127,10 @@ export default function Orders() {
 
   const handleEditClick = (order: Order, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!order.orderId) {
+      toast({ title: "Cannot edit", description: "Order ID is missing. Please refresh the list.", variant: "destructive" });
+      return;
+    }
     setSelectedOrder(null);
     navigate("/edit-order", { state: { orderId: order.orderId } });
   };
@@ -193,7 +202,7 @@ export default function Orders() {
         ) : (
           filteredOrders.map((order) => (
           <div
-            key={order.orderId}
+            key={order.orderId || order.id}
             onClick={() => setSelectedOrder(order)}
             className="bakery-card cursor-pointer"
           >
@@ -321,21 +330,28 @@ export default function Orders() {
                 )}
               </div>
 
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={(e) => handleEditClick(selectedOrder, e)}
-                  className="flex-1 min-w-[120px] p-3 bg-pink-soft text-pink-deep rounded-xl font-semibold flex items-center justify-center gap-2"
-                >
-                  <Pencil className="w-4 h-4" />
-                  Edit
-                </button>
-                <button
-                  onClick={(e) => handleDeleteClick(selectedOrder, e)}
-                  className="flex-1 min-w-[120px] p-3 bg-red-100 text-red-700 rounded-xl font-semibold flex items-center justify-center gap-2"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
+              <div className="pt-2 border-t border-border">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Order actions</p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => handleEditClick(selectedOrder, e)}
+                    disabled={!selectedOrder.orderId}
+                    className="flex-1 p-3 bg-pink-soft text-pink-deep rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Pencil className="w-4 h-4" />
+                    Edit order
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => handleDeleteClick(selectedOrder, e)}
+                    disabled={!selectedOrder.orderId}
+                    className="flex-1 p-3 bg-red-100 text-red-700 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete order
+                  </button>
+                </div>
               </div>
             </div>
           </div>

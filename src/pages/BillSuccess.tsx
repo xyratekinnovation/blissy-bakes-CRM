@@ -37,11 +37,11 @@ export default function BillSuccess() {
           .join("\n")
       : `Total: ₹${total}`;
     const message = encodeURIComponent(
-      `🧁 *Blissyy Bakes*\n\n` +
+      `🧁 *THE BLISSY BAKES*\n\n` +
       `Hi ${customer.name}!\n\n` +
       `*Your Order:*\n${itemsList}\n\n` +
       `*Total: ₹${total}*\n\n` +
-      `Thank you for choosing Blissyy Bakes! 💖`
+      `Thank you for choosing THE BLISSY BAKES! 💖`
     );
     window.open(`https://wa.me/${customer.phone}?text=${message}`, "_blank");
   };
@@ -152,7 +152,7 @@ export default function BillSuccess() {
 
         {/* Thank You Note */}
         <p className="mt-8 text-sm text-muted-foreground">
-          Thank you for using Blissyy Bakes! 💖
+          Thank you for using THE BLISSY BAKES! 💖
         </p>
       </div>
     </div>

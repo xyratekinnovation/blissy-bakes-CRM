@@ -100,11 +100,11 @@ export default function BillPreview() {
       .map((item: any) => `• ${item.name} - Qty: ${item.quantity} - ₹${item.price} each - ₹${item.price * item.quantity}`)
       .join("\n");
     const message = encodeURIComponent(
-      `🧁 *Blissyy Bakes*\n\n` +
+      `🧁 *THE BLISSY BAKES*\n\n` +
       `Hi ${customer.name}!\n\n` +
       `*Your Order:*\n${itemsList}\n\n` +
       `*Total: ₹${total}*\n\n` +
-      `Thank you for choosing Blissyy Bakes! 💖`
+      `Thank you for choosing THE BLISSY BAKES! 💖`
     );
     window.open(`https://wa.me/${customer.phone}?text=${message}`, "_blank");
   };
