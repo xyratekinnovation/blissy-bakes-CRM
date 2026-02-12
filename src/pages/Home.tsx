@@ -73,24 +73,24 @@ export default function Home() {
   }, []);
 
   const loadData = async () => {
+    setLoading(true);
+    // Load stats and orders independently so one failure doesn't blank the other
     try {
-      setLoading(true);
-      const [dashboardStats, orders] = await Promise.all([
-        reportsApi.getDashboardStats('today'),
-        ordersApi.getOrders()
-      ]);
-      
-      // Use the correct field names from the API response
+      const dashboardStats = await reportsApi.getDashboardStats('today');
       setStats({
-        todaySales: dashboardStats.totalSales || 0,
-        todayOrders: dashboardStats.orderCount || 0,
-        avgOrder: dashboardStats.avgOrderValue || 0
+        todaySales: Number(dashboardStats.totalSales) || 0,
+        todayOrders: Number(dashboardStats.orderCount) || 0,
+        avgOrder: Number(dashboardStats.avgOrderValue) || 0
       });
-      
-      // Get most recent 3 orders
-      setRecentOrders(orders.slice(0, 3));
     } catch (error) {
-      console.error("Failed to load data:", error);
+      console.error("Failed to load dashboard stats:", error);
+    }
+    try {
+      const orders = await ordersApi.getOrders();
+      const list = Array.isArray(orders) ? orders : [];
+      setRecentOrders(list.slice(0, 5));
+    } catch (error) {
+      console.error("Failed to load recent orders:", error);
     } finally {
       setLoading(false);
     }
@@ -237,25 +237,31 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-3">
-              {recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="bakery-card flex items-center gap-4"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-pink-soft flex items-center justify-center">
-                    <Cake className="w-6 h-6 text-pink-deep" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-semibold text-foreground">{order.order_number ? `#${order.order_number}` : `#${order.id.slice(0, 8).toUpperCase()}`}</span>
-                      <span className="text-sm font-bold text-primary">₹{order.total_amount.toLocaleString()}</span>
+              {recentOrders.map((order) => {
+                const orderId = order.id ?? order.orderId;
+                const displayId = order.order_number ? `#${order.order_number}` : (orderId ? `#${String(orderId).slice(0, 8).toUpperCase()}` : "—");
+                const total = order.total_amount ?? order.total ?? 0;
+                const createdAt = order.created_at ?? order.createdAt ?? "";
+                return (
+                  <div
+                    key={orderId ?? displayId}
+                    className="bakery-card flex items-center gap-4"
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-pink-soft flex items-center justify-center">
+                      <Cake className="w-6 h-6 text-pink-deep" />
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">{order.customer_name || "Walk-in Customer"}</p>
-                    <p className="text-xs text-muted-foreground/70 truncate">{order.items_summary || "No items"}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold text-foreground">{displayId}</span>
+                        <span className="text-sm font-bold text-primary">₹{Number(total).toLocaleString()}</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">{order.customer_name ?? order.customerName ?? "Walk-in Customer"}</p>
+                      <p className="text-xs text-muted-foreground/70 truncate">{order.items_summary ?? order.itemsSummary ?? "No items"}</p>
+                    </div>
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">{createdAt ? formatTimeAgo(createdAt) : ""}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">{formatTimeAgo(order.created_at)}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

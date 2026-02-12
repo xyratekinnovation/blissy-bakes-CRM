@@ -16,12 +16,20 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 @router.get("/dashboard-stats", response_model=DashboardStatsResponse)
 async def get_dashboard_stats(
     period: Optional[str] = Query("today", description="Period: today, week, month"),
+    date: Optional[str] = Query(None, description="For period=today: YYYY-MM-DD in user's timezone (default: server date)"),
     db: AsyncSession = Depends(get_db)
 ):
     now = datetime.now()
-    
-    # Calculate date range based on period
-    if period == "today":
+    # Use provided date for "today" so KPIs match user's local date (avoids timezone issues)
+    if period == "today" and date:
+        try:
+            user_date = datetime.strptime(date.strip()[:10], "%Y-%m-%d").date()
+            start_date = datetime.combine(user_date, time.min)
+            end_date = datetime.combine(user_date, time.max)
+        except ValueError:
+            start_date = datetime.combine(now.date(), time.min)
+            end_date = datetime.combine(now.date(), time.max)
+    elif period == "today":
         start_date = datetime.combine(now.date(), time.min)
         end_date = datetime.combine(now.date(), time.max)
     elif period == "week":

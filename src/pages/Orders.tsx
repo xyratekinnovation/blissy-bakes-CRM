@@ -56,15 +56,22 @@ export default function Orders() {
 
   useEffect(() => {
     loadOrders();
-    
-    // Refresh orders when page gains focus (user navigates back to this page)
-    const handleFocus = () => {
-      loadOrders();
-    };
-    
+
+    const handleFocus = () => loadOrders();
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, []);
+
+  // Lock background scroll when order modal is open
+  useEffect(() => {
+    if (selectedOrder) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [selectedOrder]);
 
   const loadOrders = async () => {
     try {
@@ -270,88 +277,96 @@ export default function Orders() {
         )}
       </main>
 
-      {/* Order Detail Modal */}
+      {/* Order Detail Modal - scrollable content, background locked */}
       {selectedOrder && (
         <div
-          className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-end"
+          className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex flex-col items-end overflow-hidden"
           onClick={() => setSelectedOrder(null)}
         >
+          <button
+            type="button"
+            className="flex-1 w-full min-h-[20%] shrink-0"
+            onClick={() => setSelectedOrder(null)}
+            aria-label="Close"
+          />
           <div
-            className="w-full bg-card rounded-t-3xl p-6 animate-slide-up"
+            className="w-full bg-card rounded-t-3xl flex flex-col max-h-[80vh] animate-slide-up shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
-
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h2 className="font-playfair text-xl font-bold">{selectedOrder.id}</h2>
-                <p className="text-sm text-muted-foreground">
-                  {selectedOrder.date} at {selectedOrder.time}
-                </p>
+            <div className="shrink-0 p-4 pt-3 pb-0">
+              <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="font-playfair text-xl font-bold">{selectedOrder.id}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrder.date} at {selectedOrder.time}
+                  </p>
+                </div>
+                <span className="text-2xl font-bold text-gradient">₹{selectedOrder.total}</span>
               </div>
-              <span className="text-2xl font-bold text-gradient">₹{selectedOrder.total}</span>
             </div>
+            <div className="flex-1 overflow-y-auto overscroll-contain px-6 pb-8">
+              <div className="space-y-4">
+                <div className="p-4 bg-muted rounded-2xl">
+                  <p className="text-sm text-muted-foreground mb-1">Customer</p>
+                  <p className="font-semibold">{selectedOrder.customer}</p>
+                  <p className="text-sm text-muted-foreground">{selectedOrder.phone}</p>
+                </div>
 
-            <div className="space-y-4">
-              <div className="p-4 bg-muted rounded-2xl">
-                <p className="text-sm text-muted-foreground mb-1">Customer</p>
-                <p className="font-semibold">{selectedOrder.customer}</p>
-                <p className="text-sm text-muted-foreground">{selectedOrder.phone}</p>
-              </div>
-
-              <div className="p-4 bg-muted rounded-2xl">
-                <p className="text-sm text-muted-foreground mb-2">Items</p>
-                {selectedOrder.itemsDetail && selectedOrder.itemsDetail.length > 0 ? (
-                  <div className="space-y-2">
-                    {selectedOrder.itemsDetail.map((item) => (
-                      <div key={item.id} className="flex items-center gap-2">
-                        {item.image && (item.image.startsWith('http') || item.image.startsWith('data:')) ? (
-                          <img 
-                            src={item.image} 
-                            alt={item.name}
-                            className="w-10 h-10 rounded-lg object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <span className="text-xl">{item.image || '🎂'}</span>
-                        )}
-                        <div className="flex-1">
-                          <p className="font-medium">{item.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.quantity} × ₹{item.price} = ₹{item.quantity * item.price}
-                          </p>
+                <div className="p-4 bg-muted rounded-2xl">
+                  <p className="text-sm text-muted-foreground mb-2">Items</p>
+                  {selectedOrder.itemsDetail && selectedOrder.itemsDetail.length > 0 ? (
+                    <div className="space-y-2">
+                      {selectedOrder.itemsDetail.map((item) => (
+                        <div key={item.id} className="flex items-center gap-2">
+                          {item.image && (item.image.startsWith('http') || item.image.startsWith('data:')) ? (
+                            <img 
+                              src={item.image} 
+                              alt={item.name}
+                              className="w-10 h-10 rounded-lg object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <span className="text-xl">{item.image || '🎂'}</span>
+                          )}
+                          <div className="flex-1">
+                            <p className="font-medium">{item.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {item.quantity} × ₹{item.price} = ₹{item.quantity * item.price}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="font-medium">{selectedOrder.items}</p>
-                )}
-              </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="font-medium">{selectedOrder.items}</p>
+                  )}
+                </div>
 
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Order actions</p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => handleEditClick(selectedOrder, e)}
-                    disabled={!selectedOrder.orderId}
-                    className="flex-1 p-3 bg-pink-soft text-pink-deep rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Pencil className="w-4 h-4" />
-                    Edit order
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleDeleteClick(selectedOrder, e)}
-                    disabled={!selectedOrder.orderId}
-                    className="flex-1 p-3 bg-red-100 text-red-700 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete order
-                  </button>
+                <div className="pt-2 border-t border-border pb-2">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Order actions</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={(e) => handleEditClick(selectedOrder, e)}
+                      disabled={!selectedOrder.orderId}
+                      className="flex-1 p-3 bg-pink-soft text-pink-deep rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Pencil className="w-4 h-4" />
+                      Edit order
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteClick(selectedOrder, e)}
+                      disabled={!selectedOrder.orderId}
+                      className="flex-1 p-3 bg-red-100 text-red-700 rounded-xl font-semibold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete order
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -3,9 +3,16 @@ import { API_BASE_URL } from '@/lib/api-config';
 export const reportsApi = {
     /**
      * Fetches dashboard statistics via Python backend.
+     * For period 'today', passes local date (YYYY-MM-DD) so KPIs match user's timezone.
      */
     getDashboardStats: async (period: 'today' | 'week' | 'month' = 'today') => {
-        const response = await fetch(`${API_BASE_URL}/analytics/dashboard-stats?period=${period}`);
+        const params = new URLSearchParams({ period });
+        if (period === 'today') {
+            const now = new Date();
+            const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            params.set('date', localDate);
+        }
+        const response = await fetch(`${API_BASE_URL}/analytics/dashboard-stats?${params}`);
 
         if (!response.ok) throw new Error('Failed to fetch stats');
         return await response.json();
