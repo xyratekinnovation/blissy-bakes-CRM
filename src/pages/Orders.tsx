@@ -153,7 +153,8 @@ export default function Orders() {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="gradient-hero px-4 pt-6 pb-4">
-        <h1 className="font-playfair text-2xl font-bold text-foreground mb-4">Order History</h1>
+        <h1 className="font-playfair text-2xl font-bold text-foreground mb-1">Order History</h1>
+        <p className="text-sm text-muted-foreground mb-4">Tap an order to view details, edit or delete</p>
 
         {/* Search */}
         <div className="relative">

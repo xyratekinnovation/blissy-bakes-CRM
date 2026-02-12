@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 import os
 from dotenv import load_dotenv
 
@@ -16,16 +17,19 @@ if not DATABASE_URL:
 db_info = DATABASE_URL.split('@')[-1] if '@' in DATABASE_URL else 'UNKNOWN'
 print(f"Connecting to DB: {db_info}")
 
+# Required when using pgbouncer (transaction/statement pool mode): disable prepared
+# statements and use NullPool so we don't get DuplicatePreparedStatementError.
 engine = create_async_engine(
     DATABASE_URL,
-    echo=True,
+    echo=os.getenv("SQL_ECHO", "false").lower() == "true",
+    poolclass=NullPool,
     connect_args={
         "server_settings": {
             "application_name": "blissy_bakes_backend"
         },
-        "prepared_statement_cache_size": 0,
+        # Disable asyncpg prepared statement cache (pgbouncer incompatible with it)
         "statement_cache_size": 0,
-    }
+    },
 )
 
 AsyncSessionLocal = sessionmaker(
